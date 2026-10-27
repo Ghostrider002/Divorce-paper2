@@ -1,0 +1,15 @@
+name: Keep Render Awake
+
+on:
+  schedule:
+    - cron: '*/10 * * * *' # প্রতি ১০ মিনিটে চলবে
+  workflow_dispatch: # চাইলে ম্যানুয়ালিও চালাতে পারবেন
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Render site
+        run: |
+          echo "Pinging ${{ secrets.RENDER_URL }} at $(date)"
+          curl -s -o /dev/null -w "HTTP Status: %{http_code}\n" "${{ secrets.RENDER_URL }}"
