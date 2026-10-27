@@ -2,7 +2,7 @@ name: Keep Render Awake
 
 on:
   schedule:
-    - cron: '*/10 * * * *' # প্রতি ১০ মিনিটে চলবে
+    - cron: '*/14 * * * *' # প্রতি ১০ মিনিটে চলবে
   workflow_dispatch: # চাইলে ম্যানুয়ালিও চালাতে পারবেন
 
 jobs:
